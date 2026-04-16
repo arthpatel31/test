@@ -8,34 +8,50 @@ on:
 
 jobs:
   backend:
-  name: Backend - Django
-  runs-on: ubuntu-latest
+    name: Backend - Django
+    runs-on: ubuntu-latest
 
-  defaults:
-    run:
-      working-directory: Django-React/backend
+    defaults:
+      run:
+        working-directory: Django-React/backend
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-        cache: "pip"
-        cache-dependency-path: Django-React/backend/requirements.txt
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
-    - name: Run Django checks
-      run: python manage.py check
+      - name: Install backend dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            echo "Installing from requirements.txt"
+            pip install -r requirements.txt
+          elif [ -f pyproject.toml ]; then
+            echo "Installing from pyproject.toml"
+            pip install .
+          elif [ -f Pipfile ]; then
+            echo "Installing from Pipfile"
+            pip install pipenv
+            pipenv install --dev
+          else
+            echo "No requirements.txt, pyproject.toml, or Pipfile found"
+            exit 1
+          fi
 
-    - name: Run tests
-      run: python manage.py test
+      - name: Run Django checks
+        run: python manage.py check
+
+      - name: Run migrations check
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        run: python manage.py test
 
   frontend:
     name: Frontend - React
@@ -53,13 +69,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: Django-React/frontend/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install frontend dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Installing with npm ci"
+            npm ci
+          else
+            echo "package-lock.json not found, using npm install"
+            npm install
+          fi
 
-      - name: Run tests
+      - name: Run frontend tests
         run: npm test -- --watchAll=false
         env:
           CI: true
