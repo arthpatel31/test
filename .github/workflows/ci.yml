@@ -23,26 +23,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
+          cache: "pip"
+          cache-dependency-path: Django-React/backend/requirements.txt
 
       - name: Install backend dependencies
         run: |
-          if [ -f requirements.txt ]; then
-            echo "Installing from requirements.txt"
-            pip install -r requirements.txt
-          elif [ -f pyproject.toml ]; then
-            echo "Installing from pyproject.toml"
-            pip install .
-          elif [ -f Pipfile ]; then
-            echo "Installing from Pipfile"
-            pip install pipenv
-            pipenv install --dev
-          else
-            echo "No requirements.txt, pyproject.toml, or Pipfile found"
-            exit 1
-          fi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run Django checks
         run: python manage.py check
@@ -69,16 +56,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: Django-React/frontend/package-lock.json
 
       - name: Install frontend dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            echo "Installing with npm ci"
-            npm ci
-          else
-            echo "package-lock.json not found, using npm install"
-            npm install
-          fi
+        run: npm ci
 
       - name: Run frontend tests
         run: npm test -- --watchAll=false
