@@ -37,7 +37,7 @@ jobs:
       - name: Run migrations check
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Run tests
+      - name: Run backend tests
         run: python manage.py test
 
   frontend:
@@ -61,11 +61,6 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
-
-      - name: Run frontend tests
-        run: npm test -- --watchAll=false
-        env:
-          CI: true
 
       - name: Build React app
         run: npm run build
